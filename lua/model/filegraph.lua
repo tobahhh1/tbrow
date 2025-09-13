@@ -1,17 +1,13 @@
 --- @class FileGraph
 --- @field name string
 --- @field isDirectory boolean
---- @field children FileGraph[]
+--- @field children FileGraph[] | nil
 --- @field parent FileGraph | nil
---- @field metadata FileMetadata
 local prototype = {
   name = "",
   isDirectory = false,
   children = {},
   parent = nil,
-  metadata = {
-    git_statuses = {}
-  }
 }
 
 --- @param o FileGraph
