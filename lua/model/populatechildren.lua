@@ -1,14 +1,11 @@
 local FileGraph = require("model/filegraph")
+local path_is_directory = require("utils/pathisdirectory")
 
 --- @param s string
 local function iter_lines(s)
   return string.gmatch(s, ".*$")
 end
 
---- @param s string
-local function path_is_directory(s)
-  return not not string.match(s, ".*/$")
-end
 
 --- @alias PopulateChildrenFn fun(node: FileGraph): FileGraph
 
@@ -16,26 +13,25 @@ end
 --- all items inside the directory node refers to.
 --- @type PopulateChildrenFn
 local function populate_children_ls(node)
-  if not node.isDirectory then
-    error("Cannot expand " .. node.name .. ": is not a directory")
+  if not path_is_directory(node.absolute_filepath) then
+    error("Cannot expand " .. node.absolute_filepath .. ": is not a directory")
   end
-  local ls_output = vim.system({"ls", "-aF", node.name}, { text = true}):wait()
+  local ls_output = vim.system({"ls", "-aF", node.absolute_filepath}, { text = true}):wait()
   if ls_output.code ~= 0 then
-    error("Cannot expand " .. node.name .. ": ls failed (unicorn!!)")
+    error("Cannot expand " .. node.absolute_filepath .. ": ls failed (unicorn!!)")
   end
   local children = {}
   for child_filename in iter_lines(ls_output.stdout) do
     if child_filename ~= "./" and child_filename ~= "../"  then
       table.insert(children, FileGraph:new({
-        name = node.name + child_filename,
-        isDirectory = path_is_directory(child_filename),
+        absolute_filepath = node.absolute_filepath + child_filename,
         parent = node,
         children = nil,
       }))
     end
   end
   return FileGraph:new({
-    name = node.name,
+    absolute_filepath = node.absolute_filepath,
     isDirectory = node.isDirectory,
     parent = node.parent,
     children = children

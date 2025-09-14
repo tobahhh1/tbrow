@@ -28,3 +28,5 @@ local diagnosticStore = {
 function diagnosticStore:refresh_max_diag_severity()
   max_diag_severity_by_file_lu = {}
 end
+
+return diagnosticStore

@@ -1,11 +1,9 @@
 --- @class FileGraph
---- @field name string
---- @field isDirectory boolean
+--- @field absolute_filepath string
 --- @field children FileGraph[] | nil
 --- @field parent FileGraph | nil
 local prototype = {
-  name = "",
-  isDirectory = false,
+  absolute_filepath = "",
   children = {},
   parent = nil,
 }
