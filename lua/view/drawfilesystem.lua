@@ -1,5 +1,6 @@
 local renderer = require("view/writetobuf")
 local state = require("view/state")
+local path_utils = require("utils.path")
 
 local default_indent_string = "  "
 local function get_indent_string()
@@ -7,6 +8,22 @@ local function get_indent_string()
     return vim.g.tbrow_indent_string
   end
   return default_indent_string
+end
+
+local default_directory_icon = ""
+local function get_directory_icon()
+  if vim.g.tbrow_directory_icon ~= nil then
+    return vim.g.tbrow_directory_icon
+  end
+  return default_directory_icon
+end
+
+local default_directory_expanded_icon = ""
+local function get_directory_expanded_icon()
+  if vim.g.tbrow_directory_expanded_icon ~= nil then
+    return vim.g.tbrow_directory_expanded_icon
+  end
+  return default_directory_expanded_icon
 end
 
 --- Return just the name of the file, with any directories removed.
@@ -45,7 +62,16 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     end
 
     local filename = get_filename_without_directories(current.node:getFilepathFromCwd())
-    table.insert(lines, current_indent_string .. filename)
+    local icon = ""
+    if path_utils.path_is_directory(current.node:getFilepathFromCwd()) then
+      if current.node:isExpanded() then
+        icon = get_directory_expanded_icon()
+      else
+        icon = get_directory_icon()
+      end
+    end
+    local line_to_render = current_indent_string .. icon .. " " .. filename
+    table.insert(lines, line_to_render)
     line_num_to_path_from_cwd[line_num] = current.node:getFilepathFromCwd()
     line_num = line_num + 1
 

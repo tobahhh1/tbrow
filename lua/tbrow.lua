@@ -13,11 +13,20 @@ function M.open_curr_win(root_path_from_cwd)
   local view_state = initialize.open_in_win(model_state, winnr)
   local bufnr = vim.api.nvim_win_get_buf(winnr)
   -- Attach keymaps to buffer
-  local function expand_directory()
-    model_state = actions.expand_directory(model_state, view_state, winnr)
-    view_state = draw_filesystem(view_state, model_state, bufnr)
+  local function toggle_directory_or_open_file()
+    local success, result = pcall(
+      function()
+        return actions.toggle_directory_expanded(model_state, view_state, winnr)
+      end
+    )
+    if success then
+      model_state = result
+      view_state = draw_filesystem(view_state, model_state, bufnr)
+    else
+      actions.open_file("wincmd p", view_state, winnr)
+    end
   end
-  vim.keymap.set("n", "<CR>", expand_directory, { buffer = true })
+  vim.keymap.set("n", "<CR>", toggle_directory_or_open_file, { buffer = true })
 end
 
 function M:setup()
