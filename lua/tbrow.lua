@@ -1,0 +1,38 @@
+local initialize = require("controller.initialize")
+local actions = require("controller.actions")
+local draw_filesystem = require("view.drawfilesystem")
+
+
+local M = {}
+
+--- Open tbrow in the current window.
+--- @param root_path_from_cwd string
+function M.open_curr_win(root_path_from_cwd)
+  local winnr = vim.api.nvim_get_current_win()
+  local model_state = initialize.new_tbrow_instance(root_path_from_cwd)
+  local view_state = initialize.open_in_win(model_state, winnr)
+  local bufnr = vim.api.nvim_win_get_buf(winnr)
+  -- Attach keymaps to buffer
+  local function expand_directory()
+    model_state = actions.expand_directory(model_state, view_state, winnr)
+    view_state = draw_filesystem(view_state, model_state, bufnr)
+  end
+  vim.keymap.set("n", "<CR>", expand_directory, { buffer = true })
+end
+
+function M:setup()
+  -- OPTIONS
+  --- When opening Tbrow to a root already in the filesystem, reuse that buffer.
+  vim.g.tbrow_reuse_buffers = false
+
+  --- Indent with this sequence of characters. Defaults to "  ", or two spaces.
+  --- TODO: Move to different file so that importing this multiple times doesn't reset it.
+  vim.g.tbrow_indent_string = "  "
+
+  -- COMMANDS
+  vim.api.nvim_create_user_command("Tbrow", function(args)
+    M.open_curr_win(args.nargs == 1 and args.fargs[1] or "./")
+  end, { nargs = '?' })
+end
+
+return M
