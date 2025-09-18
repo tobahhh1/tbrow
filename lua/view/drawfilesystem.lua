@@ -76,7 +76,14 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     line_num = line_num + 1
 
     if current.node:isExpanded() then
-      for _, child in pairs(current.node:getChildren()) do
+      local children = current.node:getChildren()
+      local sorted_child_filenames = {}
+      for name, _ in pairs(children) do
+        table.insert(sorted_child_filenames, name)
+      end
+      table.sort(sorted_child_filenames)
+      for _, name in ipairs(sorted_child_filenames) do
+        local child = children[name]
         table.insert(stack, {
           node = child,
           indent_level = current.indent_level + 1
@@ -89,5 +96,7 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     line_num_to_path_from_cwd = line_num_to_path_from_cwd
   })
 end
+
+
 
 return draw_filesystem
