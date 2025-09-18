@@ -1,6 +1,6 @@
-local renderer = require("view/writetobuf")
-local state = require("view/state")
-local path_utils = require("utils.path")
+local renderer = require("view.writetobuf")
+local state = require("view.state")
+local icons = require("view.icons")
 
 local default_indent_string = "  "
 local function get_indent_string()
@@ -10,29 +10,39 @@ local function get_indent_string()
   return default_indent_string
 end
 
-local default_directory_icon = ""
-local function get_directory_icon()
-  if vim.g.tbrow_directory_icon ~= nil then
-    return vim.g.tbrow_directory_icon
-  end
-  return default_directory_icon
-end
-
-local default_directory_expanded_icon = ""
-local function get_directory_expanded_icon()
-  if vim.g.tbrow_directory_expanded_icon ~= nil then
-    return vim.g.tbrow_directory_expanded_icon
-  end
-  return default_directory_expanded_icon
-end
-
 --- Return just the name of the file, with any directories removed.
 --- @param full_path string
 local function get_filename_without_directories(full_path)
   return string.match(full_path, "[^/]*/?$")
 end
 
---- Draw the tbrow window representing the file tree at the given buffer 
+local function repeat_indent(indent_level)
+  local indent_string = ""
+  for _ = 1, indent_level do
+    indent_string = indent_string .. get_indent_string()
+  end
+  return indent_string
+end
+
+--- @param node FileGraph
+local function create_line_to_render(indent_level, node)
+  local repeated_indent = repeat_indent(indent_level)
+  local icon = icons.get_for_file_node(node)
+  local filename = get_filename_without_directories(node:getFilepathFromCwd())
+  return repeated_indent .. icon .. " " .. filename
+end
+
+local function sorted_keys(table)
+  local result = {}
+  for name, _ in pairs(table) do
+    table.insert(result, name)
+  end
+  table.sort(result)
+  return result
+end
+
+
+--- Draw the tbrow window representing the file tree at the given buffer
 --- @param prev_state ViewState | nil Previous state the view was in; or nil to draw from scratch.
 --- @param model_state ModelState Root node of file graph to draw
 --- @param bufnr integer Buffer number to draw to
@@ -45,10 +55,9 @@ local function draw_filesystem(prev_state, model_state, bufnr)
   local line_num = 1
   --- @type table<integer, string>
   local line_num_to_path_from_cwd = {}
-  local root = model_state:getRoot()
   local stack = {
     {
-      node = root,
+      node = model_state:getRoot(),
       indent_level = 0
     }
   }
@@ -56,33 +65,13 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     local current = stack[#stack]
     table.remove(stack, #stack)
 
-    local current_indent_string = ""
-    for _ = 1, current.indent_level do
-      current_indent_string = current_indent_string .. get_indent_string()
-    end
-
-    local filename = get_filename_without_directories(current.node:getFilepathFromCwd())
-    local icon = ""
-    if path_utils.path_is_directory(current.node:getFilepathFromCwd()) then
-      if current.node:isExpanded() then
-        icon = get_directory_expanded_icon()
-      else
-        icon = get_directory_icon()
-      end
-    end
-    local line_to_render = current_indent_string .. icon .. " " .. filename
-    table.insert(lines, line_to_render)
+    table.insert(lines, create_line_to_render(current.indent_level, current.node))
     line_num_to_path_from_cwd[line_num] = current.node:getFilepathFromCwd()
     line_num = line_num + 1
 
     if current.node:isExpanded() then
       local children = current.node:getChildren()
-      local sorted_child_filenames = {}
-      for name, _ in pairs(children) do
-        table.insert(sorted_child_filenames, name)
-      end
-      table.sort(sorted_child_filenames)
-      for _, name in ipairs(sorted_child_filenames) do
+      for _, name in ipairs(sorted_keys(children)) do
         local child = children[name]
         table.insert(stack, {
           node = child,
@@ -91,10 +80,13 @@ local function draw_filesystem(prev_state, model_state, bufnr)
       end
     end
   end
+
   renderer.write_to_buf(lines, bufnr)
+
   return state.ViewState:new({
     line_num_to_path_from_cwd = line_num_to_path_from_cwd
   })
+
 end
 
 
