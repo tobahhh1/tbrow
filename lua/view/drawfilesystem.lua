@@ -1,6 +1,7 @@
 local renderer = require("view.writetobuf")
 local state = require("view.state")
 local icons = require("view.icons")
+local path_utils = require("utils.path")
 
 local default_indent_string = "  "
 local function get_indent_string()
@@ -32,15 +33,33 @@ local function create_line_to_render(indent_level, node)
   return repeated_indent .. icon .. " " .. filename
 end
 
-local function sorted_keys(table)
-  local result = {}
-  for name, _ in pairs(table) do
-    table.insert(result, name)
+local default_directories_first = true
+local function are_directories_first()
+  if vim.g.tbrow_directories_first ~= nil then
+    return vim.g.tbrow_directories_first
   end
-  table.sort(result)
-  return result
+  return default_directories_first
 end
 
+local function sorted_filenames_asc(tbl)
+  local result = {}
+  for name, _ in pairs(tbl) do
+    table.insert(result, name)
+  end
+  table.sort(result, function(a, b)
+    if are_directories_first() then
+      local a_is_directory = path_utils.path_is_directory(a)
+      local b_is_directory = path_utils.path_is_directory(b)
+      if a_is_directory and not b_is_directory then
+        return false
+      elseif b_is_directory and not a_is_directory then
+        return true
+      end
+    end
+    return a > b
+  end)
+  return result
+end
 
 --- Draw the tbrow window representing the file tree at the given buffer
 --- @param prev_state ViewState | nil Previous state the view was in; or nil to draw from scratch.
@@ -71,7 +90,7 @@ local function draw_filesystem(prev_state, model_state, bufnr)
 
     if current.node:isExpanded() then
       local children = current.node:getChildren()
-      for _, name in ipairs(sorted_keys(children)) do
+      for _, name in ipairs(sorted_filenames_asc(children)) do
         local child = children[name]
         table.insert(stack, {
           node = child,

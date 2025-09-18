@@ -2,7 +2,6 @@ local initialize = require("controller.initialize")
 local actions = require("controller.actions")
 local draw_filesystem = require("view.drawfilesystem")
 
-
 local M = {}
 
 --- Open tbrow in the current window.
@@ -23,10 +22,25 @@ function M.open_curr_win(root_path_from_cwd)
       model_state = result
       view_state = draw_filesystem(view_state, model_state, bufnr)
     else
-      actions.open_file("wincmd p", view_state, winnr)
+      actions.open_file("enew", view_state, winnr)
     end
   end
   vim.keymap.set("n", "<CR>", toggle_directory_or_open_file, { buffer = true })
+
+  -- Open file in previous window
+  local function open_in_prev_window()
+    actions.open_file("wincmd p", view_state, winnr)
+    vim.api.nvim_set_current_win(winnr)
+  end
+  vim.keymap.set("n", "p", open_in_prev_window, {buffer = true})
+
+  local function open_in_and_navigate_to_prev_window()
+    actions.open_file("wincmd p", view_state, winnr)
+  end
+  vim.keymap.set("n", "P", open_in_and_navigate_to_prev_window, {buffer = true})
+
+
+
 end
 
 function M:setup()
