@@ -40,7 +40,6 @@ function M.open_curr_win(root_path_from_cwd)
   end
   vim.keymap.set("n", "P", open_in_and_navigate_to_prev_window, {buffer = true})
 
-
   local function yank_directory()
     local reg = vim.v.register
     local filepath = actions.file_at_position_default_to_cursor(view_state, winnr)
