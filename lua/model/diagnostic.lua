@@ -1,8 +1,6 @@
+local M = {}
 
-
-
-
-local function get_max_diag_severity_by_file_lu(diagnostics)
+function M.get_max_diag_severity_by_file_lu(diagnostics)
   local lookup = {}
   for _, d in ipairs(diagnostics or vim.diagnostic.get()) do
     local fname = vim.api.nvim_buf_get_name(d.bufnr)
@@ -20,13 +18,24 @@ local function get_max_diag_severity_by_file_lu(diagnostics)
   return lookup
 end
 
+--- @class DiagnosticStore
+--- @field max_diag_severity_by_file_lu table<string, vim.diagnostic.Severity> 
+local prototype = {}
 
-local diagnosticStore = {
-  max_diag_severity_by_file_lu = {}
-}
-
-function diagnosticStore:refresh_max_diag_severity()
-  max_diag_severity_by_file_lu = {}
+--- @param o DiagnosticStore
+--- @return DiagnosticStore
+function prototype:new(o)
+  o = o or {}
+  setmetatable(o, self)
+  self.__index = self
+  return o
 end
 
-return diagnosticStore
+function prototype:maxDiagSeverityByPathFromCwd(path_from_cwd)
+  return self.max_diag_severity_by_file_lu(path_from_cwd)
+end
+
+
+M.DiagnosticStore = prototype
+
+return M

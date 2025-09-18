@@ -1,6 +1,7 @@
 local FileGraph = require("model.filegraph")
 local modelstate = require("model.state")
 local draw_filesystem = require("view.drawfilesystem")
+local diagnostic = require("model.diagnostic")
 
 local M = {}
 
@@ -86,11 +87,15 @@ function M.new_tbrow_instance(filepath_from_cwd)
   local root = FileGraph:new({
       filepath_from_cwd = filepath_from_cwd
     })
+  -- TODO move object creation logic to somewhere that the controller won't own it.
   return modelstate.ModelState:new({
     root = root,
     filepath_from_cwd_to_graph_node = {
       [filepath_from_cwd] = root
-    }
+    },
+    diagnostic_store = diagnostic.DiagnosticStore:new({
+      max_diag_severity_by_file_lu = {}
+    })
   })
 end
 

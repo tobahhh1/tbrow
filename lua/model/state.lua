@@ -1,9 +1,11 @@
 local path_utils = require("utils.path")
+local diagnostics = require("model.diagnostic")
 
 local M = {}
 
 --- @class ModelState
 --- @field root FileGraph
+--- @field diagnostic_store DiagnosticStore
 local prototype = {}
 
 --- @param o ModelState
@@ -35,7 +37,15 @@ function prototype:getFileGraphNodeAtPathFromCwd(path_from_cwd)
   return curr_node
 end
 
-M.ModelState = prototype
+function prototype:withDiagnosticsRefreshed()
+  return prototype:new({
+    root = self.root,
+    diagnostic_store = diagnostics.DiagnosticStore:new({
+      max_diag_severity_by_file_lu = diagnostics.get_max_diag_severity_by_file_lu()
+    })
+  })
+end
 
+M.ModelState = prototype
 
 return M
