@@ -1,6 +1,7 @@
 local initialize = require("controller.initialize")
 local actions = require("controller.actions")
 local draw_filesystem = require("view.drawfilesystem")
+local path_utils = require("utils.path")
 
 local M = {}
 
@@ -40,7 +41,26 @@ function M.open_curr_win(root_path_from_cwd)
   vim.keymap.set("n", "P", open_in_and_navigate_to_prev_window, {buffer = true})
 
 
+  local function yank_directory()
+    local reg = vim.v.register
+    local filepath = actions.file_at_position_default_to_cursor(view_state, winnr)
+    if path_utils.path_is_directory(filepath) then
+      vim.fn.setreg(reg, filepath)
+    else
+      local root, _ = path_utils.split_root_and_filename(filepath)
+      vim.fn.setreg(reg, root)
+    end
+  end
+  --- yd doesn't overwrite any other yank commands (it's invalid), so we are free to use it here.
+  vim.keymap.set("n", "yd", yank_directory, {buffer = true})
 
+  local function yank_filepath()
+    local reg = vim.v.register
+    local filepath = actions.file_at_position_default_to_cursor(view_state, winnr)
+    vim.fn.setreg(reg, filepath)
+  end
+  --- yc doesn't overwrite any other yank commands (it's invalid), so we are free to use it here.
+  vim.keymap.set("n", "yc", yank_filepath, {buffer = true})
 end
 
 function M:setup()

@@ -4,7 +4,7 @@ local populatechildren = require("model.populatechildren")
 
 local M = {}
 
-local function file_at_position_default_to_cursor(view_state, winnr, row, col)
+function M.file_at_position_default_to_cursor(view_state, winnr, row, col)
   if row == nil and col == nil then
     local cursor_pos = vim.api.nvim_win_get_cursor(winnr)
     row = cursor_pos[1]
@@ -16,7 +16,7 @@ local function file_at_position_default_to_cursor(view_state, winnr, row, col)
 end
 
 local function directory_at_position_default_to_cursor(view_state, winnr, row, col)
-  local filepath = file_at_position_default_to_cursor(view_state, winnr, row, col)
+  local filepath = M.file_at_position_default_to_cursor(view_state, winnr, row, col)
   if not path_utils.path_is_directory(filepath) then
     error("Cannot expand " .. filepath .. ": it isn't a directory!")
   end
@@ -62,7 +62,7 @@ M.toggle_directory_expanded = function(model_state, view_state, winnr, row, col)
 end
 
 M.open_file = function(wincmd, view_state, tbrow_winnr, row, col)
-  local file = file_at_position_default_to_cursor(view_state, tbrow_winnr, row, col)
+  local file = M.file_at_position_default_to_cursor(view_state, tbrow_winnr, row, col)
   vim.cmd(wincmd)
   vim.cmd("e " .. file)
 end
