@@ -107,7 +107,7 @@ function M.new_tbrow_instance(root_filepath, selected_file)
     diagnostic_store = diagnostic.DiagnosticStore:new({
       max_diag_severity_by_file_lu = {}
     })
-  })
+  }):withDiagnosticsRefreshed()
   if selected_file ~= nil then
     if not path_utils.path_is_directory(selected_file) then
       local dir, _ = path_utils.split_root_and_filename(selected_file)

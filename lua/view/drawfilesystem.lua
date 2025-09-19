@@ -2,6 +2,7 @@ local renderer = require("view.writetobuf")
 local state = require("view.state")
 local icons = require("view.icons")
 local path_utils = require("utils.path")
+local diagnostics = require("view.diagnostic")
 
 local default_indent_string = "  "
 local function get_indent_string()
@@ -108,11 +109,10 @@ local function draw_filesystem(prev_state, model_state, bufnr)
 
   renderer.write_to_buf(lines, bufnr)
 
-  return state.ViewState:new({
+  return diagnostics.draw_diagnostics(state.ViewState:new({
     line_num_to_absolute_filepath = line_num_to_absolute_filepath,
     absolute_filepath_to_first_position = absolute_filepath_to_first_position
-  })
-
+  }), model_state, bufnr)
 end
 
 

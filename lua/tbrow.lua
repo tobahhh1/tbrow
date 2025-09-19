@@ -2,6 +2,7 @@ local initialize = require("controller.initialize")
 local actions = require("controller.actions")
 local draw_filesystem = require("view.drawfilesystem")
 local path_utils = require("utils.path")
+local diagnostics = require("view.diagnostic")
 local debounce = require("utils.debounce")
 
 local M = {}
@@ -72,6 +73,15 @@ function M.open_curr_win(absolute_filepath)
   end
   --- yc doesn't overwrite any other yank commands (it's invalid), so we are free to use it here.
   vim.keymap.set("n", "yc", yank_filepath, {buffer = true})
+
+  local function refresh_diagnostics()
+    model_state = model_state:withDiagnosticsRefreshed()
+    view_state = diagnostics.draw_diagnostics(view_state, model_state, bufnr)
+  end
+
+  vim.api.nvim_create_autocmd("DiagnosticChanged", {
+    callback = refresh_diagnostics
+  })
 
 end
 
