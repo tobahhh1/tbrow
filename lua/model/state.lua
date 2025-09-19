@@ -22,10 +22,12 @@ function prototype:getRoot()
 end
 
 
---- @param path_from_cwd string
-function prototype:getFileGraphNodeAtPathFromCwd(path_from_cwd)
+--- @param absolute_filepath string
+function prototype:getFileGraphNodeAtAbsoluteFilepath(absolute_filepath)
   local curr_node = self.root
-  for path_el in path_utils.iter_path_elements(path_from_cwd) do
+  for path_el in path_utils.iter_path_elements(
+    path_utils.without_prefix(absolute_filepath, self.root.absolute_filepath)
+  ) do
     -- same directory
     if path_el ~= "." and path_el ~= "./" then
       curr_node = curr_node.children[path_el]

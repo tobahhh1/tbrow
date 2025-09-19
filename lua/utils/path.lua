@@ -19,14 +19,13 @@ M.split_root_and_filename = function(s)
   return string.sub(s, 1, filename_ind - 1), string.sub(s, filename_ind)
 end
 
-M.normalize_relative_to_cwd = function(s)
-  local result = ""
-  for path_el in M.iter_path_elements(s) do
-    if path_el ~= "." and path_el ~= "./" then
-      result = result .. path_el
+function M.without_prefix(s, prefix)
+    if s:sub(1, #prefix) == prefix then
+        return s:sub(#prefix + 1)
+    else
+        error(s .. " does not start with " .. prefix)
     end
-  end
-  return result
 end
+
 
 return M

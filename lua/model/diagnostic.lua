@@ -31,8 +31,8 @@ function prototype:new(o)
   return o
 end
 
-function prototype:maxDiagSeverityByPathFromCwd(path_from_cwd)
-  return self.max_diag_severity_by_file_lu(path_from_cwd)
+function prototype:maxDiagSeverityByAbsoluteFilepath(absolue_filepath)
+  return self.max_diag_severity_by_file_lu(absolue_filepath)
 end
 
 

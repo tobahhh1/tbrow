@@ -29,7 +29,7 @@ end
 local function create_line_to_render(indent_level, node)
   local repeated_indent = repeat_indent(indent_level)
   local icon = icons.get_for_file_node(node)
-  local filename = get_filename_without_directories(node:getFilepathFromCwd())
+  local filename = get_filename_without_directories(node:absoluteFilepath())
   return repeated_indent .. icon .. " " .. filename
 end
 
@@ -73,7 +73,8 @@ local function draw_filesystem(prev_state, model_state, bufnr)
   local lines = {}
   local line_num = 1
   --- @type table<integer, string>
-  local line_num_to_path_from_cwd = {}
+  local line_num_to_absolute_filepath = {}
+  local absolute_filepath_to_first_position = {}
   local stack = {
     {
       node = model_state:getRoot(),
@@ -84,8 +85,13 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     local current = stack[#stack]
     table.remove(stack, #stack)
 
-    table.insert(lines, create_line_to_render(current.indent_level, current.node))
-    line_num_to_path_from_cwd[line_num] = current.node:getFilepathFromCwd()
+    local line = create_line_to_render(current.indent_level, current.node)
+    table.insert(lines, line)
+    line_num_to_absolute_filepath[line_num] = current.node:absoluteFilepath()
+    absolute_filepath_to_first_position[current.node:absoluteFilepath()] = {
+      row = line_num,
+      col = #repeat_indent(current.indent_level) + 1
+    }
     line_num = line_num + 1
 
     if current.node:isExpanded() then
@@ -103,7 +109,8 @@ local function draw_filesystem(prev_state, model_state, bufnr)
   renderer.write_to_buf(lines, bufnr)
 
   return state.ViewState:new({
-    line_num_to_path_from_cwd = line_num_to_path_from_cwd
+    line_num_to_absolute_filepath = line_num_to_absolute_filepath,
+    absolute_filepath_to_first_position = absolute_filepath_to_first_position
   })
 
 end

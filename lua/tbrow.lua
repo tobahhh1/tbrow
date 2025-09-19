@@ -7,29 +7,36 @@ local debounce = require("utils.debounce")
 local M = {}
 
 --- Open tbrow in the current window.
---- @param root_path_from_cwd string
-function M.open_curr_win(root_path_from_cwd)
+--- @param absolute_filepath string
+function M.open_curr_win(absolute_filepath)
   local winnr = vim.api.nvim_get_current_win()
-  local current_file = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(winnr))
-  local model_state = initialize.new_tbrow_instance(root_path_from_cwd)
-  local view_state = initialize.open_in_win(model_state, winnr)
+  if not path_utils.path_is_directory(absolute_filepath) then
+    absolute_filepath = absolute_filepath .. "/"
+  end
+  local selected_file = absolute_filepath
+  if vim.bo.buftype == "" then
+    local buffer_name = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(winnr))
+    if buffer_name ~= "" then
+      selected_file = buffer_name
+    end
+  end
+  local model_state = initialize.new_tbrow_instance(absolute_filepath, selected_file)
+  local view_state = initialize.open_in_win(model_state, winnr, selected_file)
   local bufnr = vim.api.nvim_win_get_buf(winnr)
 
   -- Attach keymaps to buffer
   local function toggle_directory_or_open_file()
-    model_state = actions.toggle_directory_expanded(model_state, view_state, winnr)
-    view_state = draw_filesystem(view_state, model_state, bufnr)
-    -- local success, result = pcall(
-    --   function()
-    --     return actions.toggle_directory_expanded(model_state, view_state, winnr)
-    --   end
-    -- )
-    -- if success then
-    --   model_state = result:withDiagnosticsRefreshed()
-    --   view_state = draw_filesystem(view_state, model_state, bufnr)
-    -- else
-    --   actions.open_file("0", view_state, winnr)
-    -- end
+    local success, result = pcall(
+      function()
+        return actions.toggle_directory_expanded(model_state, view_state, winnr)
+      end
+    )
+    if success then
+      model_state = result:withDiagnosticsRefreshed()
+      view_state = draw_filesystem(view_state, model_state, bufnr)
+    else
+      actions.open_file("0", view_state, winnr)
+    end
   end
   vim.keymap.set("n", "<CR>", toggle_directory_or_open_file, { buffer = true })
 
@@ -79,7 +86,7 @@ function M:setup()
 
   -- COMMANDS
   vim.api.nvim_create_user_command("Tbrow", function(args)
-    M.open_curr_win(args.nargs == 1 and args.fargs[1] or "")
+    M.open_curr_win(args.nargs == 1 and vim.fn.getcwd() .. args.fargs[1] or vim.fn.getcwd())
   end, { nargs = '?' })
 end
 

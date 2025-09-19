@@ -1,10 +1,10 @@
 local path_utils = require("utils.path")
 
 --- @class FileGraph
---- @field filepath_from_cwd string
+--- @field absolute_filepath string
 --- @field children table<string, FileGraph> | nil
 local prototype = {
-  filepath_from_cwd = "",
+  absolute_filepath = "",
   children = nil,
 }
 
@@ -26,8 +26,8 @@ function prototype:getChildren()
   end
 end
 
-function prototype:getFilepathFromCwd()
-  return self.filepath_from_cwd
+function prototype:absoluteFilepath()
+  return self.absolute_filepath
 end
 
 function prototype:isExpanded()
@@ -42,19 +42,19 @@ local function shallow_copy(tbl)
   return copy
 end
 
---- @param filepath_from_cwd string
+--- @param absolute_filepath string
 --- @param node_replacement FileGraph
 --- @return FileGraph
-function prototype:withNodeAtPathReplaced(filepath_from_cwd, node_replacement)
-  filepath_from_cwd = path_utils.normalize_relative_to_cwd(filepath_from_cwd)
-  if filepath_from_cwd == "" then
+function prototype:withNodeAtPathReplaced(absolute_filepath, node_replacement)
+  if absolute_filepath == self.absolute_filepath then
     return node_replacement
   end
 
-  local node_to_replace_root_path, node_to_replace_filename = path_utils.split_root_and_filename(filepath_from_cwd)
+  local node_to_replace_root_path, node_to_replace_filename = path_utils.split_root_and_filename(
+    path_utils.without_prefix(absolute_filepath, self.absolute_filepath))
 
   local root_replacement = prototype:new({
-      filepath_from_cwd = self.filepath_from_cwd,
+      absolute_filepath = self.absolute_filepath,
       children = shallow_copy(self.children)
   })
 
@@ -63,13 +63,13 @@ function prototype:withNodeAtPathReplaced(filepath_from_cwd, node_replacement)
     if path_el ~= "./" and path_el ~= "." then
       local old_child = curr_node.children[path_el]
       local new_child = prototype:new({
-        filepath_from_cwd = old_child.filepath_from_cwd,
+        absolute_filepath = old_child.absolute_filepath,
         children = shallow_copy(old_child.children)
       })
       curr_node.children[path_el] = new_child
       curr_node = new_child
       if curr_node == nil then
-        error("Path " .. filepath_from_cwd .. " is not currently indexed")
+        error("Path " .. absolute_filepath .. " is not currently indexed")
       end
     end
   end

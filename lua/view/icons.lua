@@ -29,14 +29,14 @@ end
 --- @param node FileGraph 
 --- @return string icon
 function M.get_for_file_node(node)
-  if path_utils.path_is_directory(node:getFilepathFromCwd()) then
+  if path_utils.path_is_directory(node:absoluteFilepath()) then
     if node:isExpanded() then
       return M.get("directory_expanded")
     else
       return M.get("directory")
     end
   end
-  return M.get_for_file_path(node:getFilepathFromCwd())
+  return M.get_for_file_path(node:absoluteFilepath())
 end
 
 

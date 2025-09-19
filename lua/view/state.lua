@@ -5,9 +5,11 @@ local M = {}
 --- Any fields or methods on this class should not be called by consumers
 --- and can change at any moment.
 --- @class ViewState 
---- @field line_num_to_path_from_cwd table<integer, string>
+--- @field line_num_to_absolute_filepath table<integer, string>
+--- @field absolute_filepath_to_first_position table<string, {row: integer, col: integer}>
 local prototype = {
-  line_num_to_path_from_cwd = {}
+  line_num_to_absolute_filepath = {},
+  absolute_filepath_to_first_position = {}
 }
 
 --- @param o ViewState | nil

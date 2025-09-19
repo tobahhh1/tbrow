@@ -53,7 +53,10 @@ end
 --- @param col integer | nil Column number, or nil for current position.
 M.toggle_directory_expanded = function(model_state, view_state, winnr, row, col)
   local directory = directory_at_position_default_to_cursor(view_state, winnr, row, col)
-  local node = model_state:getFileGraphNodeAtPathFromCwd(directory)
+  local node = model_state:getFileGraphNodeAtAbsoluteFilepath(directory)
+  if node == nil then
+    error("Could not find " .. directory)
+  end
   if node:isExpanded() then
     return populatechildren.with_file_collapsed(model_state, directory)
   else
