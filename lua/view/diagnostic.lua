@@ -38,7 +38,6 @@ local function draw_diagnostics(prev_state, model_state, bufnr)
   for line_num, file_name in pairs(line_number_to_file_info) do
     if diagnostics[file_name] then
       local severity = diagnostics[file_name]
-      print("file " .. file_name .. ": " .. prev_state.absolute_filepath_to_first_position[file_name].col)
       vim.api.nvim_buf_set_extmark(
         bufnr,
         netrw_extmark_diagnostic_namespace,

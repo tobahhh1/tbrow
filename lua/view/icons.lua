@@ -5,7 +5,27 @@ local M = {}
 M.defaults = {
   directory = "",
   directory_expanded = "",
-  file = ""
+  file = "",
+  java = "",
+  lua = "",
+  ts = "",
+  js = "",
+  tsx = "",
+  jsx = "",
+  yaml = "",
+  xml = "󰗀",
+  json = "󰘦",
+  properties = "",
+  env = "",
+  python = "",
+  sh = "",
+  bash = "",
+  zsh = "",
+  zshrc = "",
+  bashrc = "",
+  zprofile = "",
+  Dockerfile = "󰡨",
+  Jenkinsfile = "",
 }
 
 M.highlights = {
@@ -35,7 +55,13 @@ function M.get_key_for_file_node(node)
 end
 
 function M.get_key_for_file_path(filepath)
-  local _ = filepath
+  local extension = path_utils.get_extension(filepath)
+  if M.get(extension) ~= nil then
+    return extension
+  end
+  if M.get(filepath) ~= nil then
+    return filepath
+  end
   return "file"
 end
 
@@ -54,7 +80,7 @@ function M.get_for_file_node(node)
 end
 
 function M.get_highlight(key)
-  return M.highlights[key]
+  return M.highlights[key] or "Title"
 end
 
 function M.get_highlight_for_file_node(node)

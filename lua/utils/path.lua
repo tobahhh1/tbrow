@@ -27,5 +27,8 @@ function M.without_prefix(s, prefix)
     end
 end
 
+function M.get_extension(s)
+  return string.match(s, "[^.]*$")
+end
 
 return M
