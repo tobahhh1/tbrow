@@ -30,7 +30,7 @@ function prototype:getFileGraphNodeAtPathFromCwd(path_from_cwd)
     if path_el ~= "." and path_el ~= "./" then
       curr_node = curr_node.children[path_el]
       if curr_node == nil then
-        error("Path " .. " not indexed in current file tree, perhaps there are directories you need to expand?")
+        return curr_node
       end
     end
   end

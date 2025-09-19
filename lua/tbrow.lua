@@ -2,6 +2,7 @@ local initialize = require("controller.initialize")
 local actions = require("controller.actions")
 local draw_filesystem = require("view.drawfilesystem")
 local path_utils = require("utils.path")
+local debounce = require("utils.debounce")
 
 local M = {}
 
@@ -9,22 +10,26 @@ local M = {}
 --- @param root_path_from_cwd string
 function M.open_curr_win(root_path_from_cwd)
   local winnr = vim.api.nvim_get_current_win()
+  local current_file = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(winnr))
   local model_state = initialize.new_tbrow_instance(root_path_from_cwd)
   local view_state = initialize.open_in_win(model_state, winnr)
   local bufnr = vim.api.nvim_win_get_buf(winnr)
+
   -- Attach keymaps to buffer
   local function toggle_directory_or_open_file()
-    local success, result = pcall(
-      function()
-        return actions.toggle_directory_expanded(model_state, view_state, winnr)
-      end
-    )
-    if success then
-      model_state = result
-      view_state = draw_filesystem(view_state, model_state, bufnr)
-    else
-      actions.open_file("enew", view_state, winnr)
-    end
+    model_state = actions.toggle_directory_expanded(model_state, view_state, winnr)
+    view_state = draw_filesystem(view_state, model_state, bufnr)
+    -- local success, result = pcall(
+    --   function()
+    --     return actions.toggle_directory_expanded(model_state, view_state, winnr)
+    --   end
+    -- )
+    -- if success then
+    --   model_state = result:withDiagnosticsRefreshed()
+    --   view_state = draw_filesystem(view_state, model_state, bufnr)
+    -- else
+    --   actions.open_file("0", view_state, winnr)
+    -- end
   end
   vim.keymap.set("n", "<CR>", toggle_directory_or_open_file, { buffer = true })
 
@@ -60,6 +65,7 @@ function M.open_curr_win(root_path_from_cwd)
   end
   --- yc doesn't overwrite any other yank commands (it's invalid), so we are free to use it here.
   vim.keymap.set("n", "yc", yank_filepath, {buffer = true})
+
 end
 
 function M:setup()
@@ -73,7 +79,7 @@ function M:setup()
 
   -- COMMANDS
   vim.api.nvim_create_user_command("Tbrow", function(args)
-    M.open_curr_win(args.nargs == 1 and args.fargs[1] or "./")
+    M.open_curr_win(args.nargs == 1 and args.fargs[1] or "")
   end, { nargs = '?' })
 end
 

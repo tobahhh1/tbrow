@@ -11,9 +11,13 @@ function M.expand_children(node)
   if not path_utils.path_is_directory(node.filepath_from_cwd) then
     error("Cannot expand " .. node.filepath_from_cwd .. ": is not a directory")
   end
-  local ls_output = vim.system({"ls", "-aF", node.filepath_from_cwd}, { text = true}):wait()
+  local cmd = {"ls", "-aF"}
+  if #node.filepath_from_cwd ~= 0 then
+    table.insert(cmd, node.filepath_from_cwd)
+  end
+  local ls_output = vim.system(cmd, { text = true}):wait()
   if ls_output.code ~= 0 then
-    error("Cannot expand " .. node.filepath_from_cwd .. ": ls failed (unicorn!!)")
+    error("Cannot expand " .. node.filepath_from_cwd .. ": ls failed; does the file exist?")
   end
   local children = {}
   for _, child_filename in ipairs(vim.fn.split(ls_output.stdout, "\n")) do
@@ -31,14 +35,43 @@ end
 --- @param filepath_from_cwd string
 --- @return ModelState
 function M.with_file_expanded(state, filepath_from_cwd)
-  local result_state = model_state.ModelState:new(state)
-  local node_to_expand = state:getFileGraphNodeAtPathFromCwd(filepath_from_cwd)
-  local children = M.expand_children(node_to_expand)
 
-  result_state.root = state:getRoot():withNodeAtPathReplaced(filepath_from_cwd, FileGraph:new({
-    filepath_from_cwd=filepath_from_cwd,
-    children=children,
-  }))
+  local result_state = model_state.ModelState:new(state)
+
+  local path_to_first_not_expanded_node = ""
+  local first_path_el_not_expanded = ""
+  local iterator = path_utils.iter_path_elements(filepath_from_cwd)
+  local curr_node = state:getRoot()
+  for path_el in iterator do
+    path_to_first_not_expanded_node = path_to_first_not_expanded_node .. path_el
+    print("Loop " .. path_to_first_not_expanded_node)
+    if not curr_node:isExpanded() then
+      first_path_el_not_expanded = path_el
+      break
+    end
+    curr_node = curr_node.children[path_el]
+    if curr_node == nil then
+      error("File does not exist")
+    end
+  end
+
+  print("Need to expand " .. path_to_first_not_expanded_node)
+  print("Replacing " .. curr_node.filepath_from_cwd)
+
+  local expanded_replacement_node = FileGraph:new(curr_node)
+  expanded_replacement_node.children = M.expand_children(curr_node)
+  print(#expanded_replacement_node.children)
+
+  -- already took path_el out of the iterator, so we need to iterate this one manually.
+  curr_node = expanded_replacement_node.children[first_path_el_not_expanded]
+
+  for path_el in iterator do
+    local child = curr_node.children[path_el]
+    child.children = M.expand_children(child)
+    curr_node = child
+  end
+
+  result_state.root = state:getRoot():withNodeAtPathReplaced(path_to_first_not_expanded_node, expanded_replacement_node)
 
   return result_state
 end

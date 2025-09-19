@@ -46,11 +46,12 @@ end
 --- @param node_replacement FileGraph
 --- @return FileGraph
 function prototype:withNodeAtPathReplaced(filepath_from_cwd, node_replacement)
-  local node_to_replace_root_path, node_to_replace_filename = path_utils.split_root_and_filename(filepath_from_cwd)
-  if node_to_replace_root_path == "" then
-    -- Replacing the root
+  filepath_from_cwd = path_utils.normalize_relative_to_cwd(filepath_from_cwd)
+  if filepath_from_cwd == "" then
     return node_replacement
   end
+
+  local node_to_replace_root_path, node_to_replace_filename = path_utils.split_root_and_filename(filepath_from_cwd)
 
   local root_replacement = prototype:new({
       filepath_from_cwd = self.filepath_from_cwd,
