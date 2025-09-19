@@ -80,7 +80,7 @@ function M.open_curr_win(absolute_filepath)
   end
 
   vim.api.nvim_create_autocmd("DiagnosticChanged", {
-    callback = refresh_diagnostics
+    callback = debounce.with_debounce(refresh_diagnostics, 100)
   })
 
 end

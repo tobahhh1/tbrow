@@ -68,14 +68,14 @@ end
 --- @param bufnr integer Buffer number to draw to
 --- @return ViewState
 local function draw_filesystem(prev_state, model_state, bufnr)
-  local _
-  _ = prev_state
+  local _ = prev_state
 
   local lines = {}
   local line_num = 1
   --- @type table<integer, string>
   local line_num_to_absolute_filepath = {}
   local absolute_filepath_to_first_position = {}
+  local absolute_filepath_to_last_position = {}
   local stack = {
     {
       node = model_state:getRoot(),
@@ -88,10 +88,15 @@ local function draw_filesystem(prev_state, model_state, bufnr)
 
     local line = create_line_to_render(current.indent_level, current.node)
     table.insert(lines, line)
-    line_num_to_absolute_filepath[line_num] = current.node:absoluteFilepath()
-    absolute_filepath_to_first_position[current.node:absoluteFilepath()] = {
+    local current_path = current.node:absoluteFilepath()
+    line_num_to_absolute_filepath[line_num] = current_path
+    absolute_filepath_to_first_position[current_path] = {
       row = line_num,
-      col = #repeat_indent(current.indent_level) + 1
+      col = #repeat_indent(current.indent_level) + 4
+    }
+    absolute_filepath_to_last_position[current_path] = {
+      row = line_num,
+      col = #line
     }
     line_num = line_num + 1
 
@@ -111,7 +116,8 @@ local function draw_filesystem(prev_state, model_state, bufnr)
 
   return diagnostics.draw_diagnostics(state.ViewState:new({
     line_num_to_absolute_filepath = line_num_to_absolute_filepath,
-    absolute_filepath_to_first_position = absolute_filepath_to_first_position
+    absolute_filepath_to_first_position = absolute_filepath_to_first_position,
+    absolute_filepath_to_last_position = absolute_filepath_to_last_position
   }), model_state, bufnr)
 end
 

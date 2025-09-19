@@ -7,9 +7,11 @@ local M = {}
 --- @class ViewState 
 --- @field line_num_to_absolute_filepath table<integer, string>
 --- @field absolute_filepath_to_first_position table<string, {row: integer, col: integer}>
+--- @field absolute_filepath_to_last_position table<string, {row: integer, col: integer}>
 local prototype = {
   line_num_to_absolute_filepath = {},
-  absolute_filepath_to_first_position = {}
+  absolute_filepath_to_first_position = {},
+  absolute_filepath_to_last_position = {}
 }
 
 --- @param o ViewState | nil
