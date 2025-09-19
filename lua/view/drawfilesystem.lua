@@ -62,6 +62,9 @@ local function sorted_filenames_asc(tbl)
   return result
 end
 
+
+local tbrow_icon_color_ns = vim.api.nvim_create_namespace("tbrow_icon_color_ns")
+
 --- Draw the tbrow window representing the file tree at the given buffer
 --- @param prev_state ViewState | nil Previous state the view was in; or nil to draw from scratch.
 --- @param model_state ModelState Root node of file graph to draw
@@ -71,6 +74,7 @@ local function draw_filesystem(prev_state, model_state, bufnr)
   local _ = prev_state
 
   local lines = {}
+  local highlights = {}
   local line_num = 1
   --- @type table<integer, string>
   local line_num_to_absolute_filepath = {}
@@ -87,12 +91,25 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     table.remove(stack, #stack)
 
     local line = create_line_to_render(current.indent_level, current.node)
+    local indent = repeat_indent(current.indent_level)
     table.insert(lines, line)
+    table.insert(
+      highlights,
+      {
+        line = line_num - 1,
+        col = #indent,
+        ns = tbrow_icon_color_ns,
+        opts = {
+          end_row = line_num - 1,
+          end_col = #indent + 1,
+          hl_group = icons.get_highlight_for_file_node(current.node)
+        }
+    })
     local current_path = current.node:absoluteFilepath()
     line_num_to_absolute_filepath[line_num] = current_path
     absolute_filepath_to_first_position[current_path] = {
       row = line_num,
-      col = #repeat_indent(current.indent_level) + 4
+      col = #indent + 4
     }
     absolute_filepath_to_last_position[current_path] = {
       row = line_num,
@@ -113,6 +130,15 @@ local function draw_filesystem(prev_state, model_state, bufnr)
   end
 
   renderer.write_to_buf(lines, bufnr)
+  for _, highlight in ipairs(highlights) do
+    vim.api.nvim_buf_set_extmark(
+      bufnr,
+      highlight.ns,
+      highlight.line,
+      highlight.col,
+      highlight.opts
+    )
+  end
 
   return diagnostics.draw_diagnostics(state.ViewState:new({
     line_num_to_absolute_filepath = line_num_to_absolute_filepath,
