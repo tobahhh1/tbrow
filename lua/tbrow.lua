@@ -4,6 +4,7 @@ local draw_filesystem = require("view.drawfilesystem")
 local path_utils = require("utils.path")
 local diagnostics = require("view.diagnostic")
 local debounce = require("utils.debounce")
+local populatechildren = require("model.populatechildren")
 
 local M = {}
 
@@ -82,6 +83,13 @@ function M.open_curr_win(absolute_filepath)
   vim.api.nvim_create_autocmd("DiagnosticChanged", {
     callback = debounce.with_debounce(refresh_diagnostics, 100)
   })
+
+  local function refresh_filesystem()
+    model_state = populatechildren.with_root_refreshed(model_state)
+    view_state = draw_filesystem(view_state, model_state, bufnr)
+  end
+
+  vim.keymap.set("n", "<C-l>", refresh_filesystem, {buffer = true})
 
 end
 

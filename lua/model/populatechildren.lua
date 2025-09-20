@@ -31,6 +31,43 @@ function M.expand_children(node)
   return children
 end
 
+--- @param root FileGraph
+function M.refreshed(root)
+  local new_root = FileGraph:new({
+    absolute_filepath = root.absolute_filepath,
+  })
+  local stack = {
+    {
+      old_node = root,
+      new_node = new_root
+    }
+  }
+  while #stack > 0 do
+    local curr = table.remove(stack, #stack)
+    local old_node = curr.old_node
+    local new_node = curr.new_node
+    if old_node:isExpanded() then
+      new_node.children = M.expand_children(old_node)
+      for filename, old_child in pairs(old_node:getChildren()) do
+        -- don't add nodes that don't exist anymore
+        if new_node.children[filename] then
+          table.insert(stack, {
+            old_node = old_child,
+            new_node = new_node.children[filename]
+          })
+        end
+      end
+    end
+  end
+  return new_root
+end
+
+function M.with_root_refreshed(state)
+  local new_state = model_state.ModelState:new(state)
+  new_state.root = M.refreshed(state:getRoot())
+  return new_state
+end
+
 --- @param state ModelState
 --- @param absolute_filepath string
 --- @return ModelState

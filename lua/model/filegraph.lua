@@ -77,4 +77,5 @@ function prototype:withNodeAtPathReplaced(absolute_filepath, node_replacement)
 
   return root_replacement
 end
+
 return prototype
