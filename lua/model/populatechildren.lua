@@ -11,7 +11,7 @@ function M.expand_children(node)
   if not path_utils.path_is_directory(node.absolute_filepath) then
     error("Cannot expand " .. node.absolute_filepath .. ": is not a directory")
   end
-  local cmd = {"ls", "-aF"}
+  local cmd = {"ls", "-ap"}
   if #node.absolute_filepath ~= 0 then
     table.insert(cmd, node.absolute_filepath)
   end
