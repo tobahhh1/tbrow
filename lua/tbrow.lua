@@ -5,6 +5,7 @@ local path_utils = require("utils.path")
 local diagnostics = require("view.diagnostic")
 local debounce = require("utils.debounce")
 local populatechildren = require("model.populatechildren")
+local file_api = require("api.file")
 
 local M = {}
 
@@ -26,6 +27,21 @@ function M.open_curr_win(absolute_filepath)
   local view_state = initialize.open_in_win(model_state, winnr, selected_file)
   local bufnr = vim.api.nvim_win_get_buf(winnr)
 
+  TbrowBufnrToInstance[bufnr] = {
+    model_state = model_state,
+    view_state = view_state,
+  }
+
+  local function update_global_instance()
+    if TbrowBufnrToInstance == nil then
+      TbrowBufnrToInstance = {}
+    end
+    TbrowBufnrToInstance[bufnr] = {
+      model_state = model_state,
+      view_state = view_state
+    }
+  end
+
   -- Attach keymaps to buffer
   local function toggle_directory_or_open_file()
     local success, result = pcall(
@@ -39,6 +55,7 @@ function M.open_curr_win(absolute_filepath)
     else
       actions.open_file("0", view_state, winnr)
     end
+    update_global_instance()
   end
   vim.keymap.set("n", "<CR>", toggle_directory_or_open_file, { buffer = true })
 
@@ -46,11 +63,13 @@ function M.open_curr_win(absolute_filepath)
   local function open_in_prev_window()
     actions.open_file("wincmd p", view_state, winnr)
     vim.api.nvim_set_current_win(winnr)
+    update_global_instance()
   end
   vim.keymap.set("n", "p", open_in_prev_window, {buffer = true})
 
   local function open_in_and_navigate_to_prev_window()
     actions.open_file("wincmd p", view_state, winnr)
+    update_global_instance()
   end
   vim.keymap.set("n", "P", open_in_and_navigate_to_prev_window, {buffer = true})
 
@@ -78,6 +97,7 @@ function M.open_curr_win(absolute_filepath)
   local function refresh_diagnostics()
     model_state = model_state:withDiagnosticsRefreshed()
     view_state = diagnostics.draw_diagnostics(view_state, model_state, bufnr)
+    update_global_instance()
   end
 
   vim.api.nvim_create_autocmd("DiagnosticChanged", {
@@ -87,6 +107,7 @@ function M.open_curr_win(absolute_filepath)
   local function refresh_filesystem()
     model_state = populatechildren.with_root_refreshed(model_state)
     view_state = draw_filesystem(view_state, model_state, bufnr)
+    update_global_instance()
   end
 
   vim.keymap.set("n", "<C-l>", refresh_filesystem, {buffer = true})
@@ -102,10 +123,20 @@ function M:setup()
   --- TODO: Move to different file so that importing this multiple times doesn't reset it.
   vim.g.tbrow_indent_string = "  "
 
+  --- Internal mapping from buffer number to Tbrow instance.
+  if TbrowBufnrToInstance == nil then
+    TbrowBufnrToInstance = {}
+  end
+
   -- COMMANDS
   vim.api.nvim_create_user_command("Tbrow", function(args)
     M.open_curr_win(args.nargs == 1 and vim.fn.getcwd() .. args.fargs[1] or vim.fn.getcwd())
   end, { nargs = '?' })
 end
+
+M.api = {
+  open_curr_win = M.open_curr_win,
+  file = file_api,
+}
 
 return M
