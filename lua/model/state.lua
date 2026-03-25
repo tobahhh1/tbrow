@@ -1,5 +1,6 @@
 local path_utils = require("utils.path")
 local diagnostics = require("model.diagnostic")
+local gitstatus = require("model.gitstatus")
 
 local M = {}
 
@@ -7,6 +8,7 @@ local M = {}
 --- @field root FileGraph
 --- @field diagnostic_store DiagnosticStore
 --- @field show_hidden boolean
+--- @field git_status_store GitStatusStore
 local prototype = {}
 
 --- @param o ModelState
@@ -44,6 +46,7 @@ function prototype:withDiagnosticsRefreshed()
   return prototype:new({
     root = self.root,
     show_hidden = self.show_hidden,
+    git_status_store = self.git_status_store,
     diagnostic_store = diagnostics.DiagnosticStore:new({
       max_diag_severity_by_file_lu = diagnostics.get_max_diag_severity_by_file_lu()
     })
@@ -55,6 +58,16 @@ function prototype:withHiddenToggled()
     root = self.root,
     show_hidden = not self.show_hidden,
     diagnostic_store = self.diagnostic_store,
+    git_status_store = self.git_status_store,
+  })
+end
+
+function prototype:withGitStatusRefreshed()
+  return prototype:new({
+    root = self.root,
+    show_hidden = self.show_hidden,
+    diagnostic_store = self.diagnostic_store,
+    git_status_store = gitstatus.GitStatusStore:refreshed(),
   })
 end
 

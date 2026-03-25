@@ -3,6 +3,7 @@ local actions = require("controller.actions")
 local draw_filesystem = require("view.drawfilesystem")
 local path_utils = require("utils.path")
 local diagnostics = require("view.diagnostic")
+local git_status_view = require("view.gitstatus")
 local debounce = require("utils.debounce")
 local populatechildren = require("model.populatechildren")
 local file_api = require("api.file")
@@ -32,7 +33,7 @@ local function setup_buffer(init_model_state, init_view_state, winnr, bufnr)
   local function toggle_directory_or_open_file()
     local filepath = actions.file_at_position_default_to_cursor(view_state, winnr)
     if path_utils.path_is_directory(filepath) then
-      model_state = actions.toggle_directory_expanded(model_state, view_state, winnr):withDiagnosticsRefreshed()
+      model_state = actions.toggle_directory_expanded(model_state, view_state, winnr):withDiagnosticsRefreshed():withGitStatusRefreshed()
       view_state = draw_filesystem(view_state, model_state, bufnr)
     else
       actions.open_file("0", view_state, winnr)
@@ -83,8 +84,18 @@ local function setup_buffer(init_model_state, init_view_state, winnr, bufnr)
     callback = debounce.with_debounce(refresh_diagnostics, 100)
   })
 
+  local function refresh_git_status()
+    model_state = model_state:withGitStatusRefreshed()
+    view_state = git_status_view.draw_git_status(view_state, model_state, bufnr)
+    update_global_instance()
+  end
+
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    callback = debounce.with_debounce(refresh_git_status, 200)
+  })
+
   local function refresh_filesystem()
-    model_state = populatechildren.with_root_refreshed(model_state)
+    model_state = populatechildren.with_root_refreshed(model_state):withGitStatusRefreshed()
     view_state = draw_filesystem(view_state, model_state, bufnr)
     update_global_instance()
   end

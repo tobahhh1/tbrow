@@ -1,3 +1,5 @@
+local M = {}
+
 local function split(s, delimiter)
   local result = {}
   for match in string.gmatch(s, "([^"..delimiter.."]+)") do
@@ -67,9 +69,9 @@ local function flatten(nestedTable)
     local function deepFlatten(currentTable)
         for _, value in ipairs(currentTable) do
             if type(value) == "table" then
-                deepFlatten(value) -- Recursively flatten sub-tables
+                deepFlatten(value)
             else
-                table.insert(flatTable, value) -- Add non-table elements to the flat table
+                table.insert(flatTable, value)
             end
         end
     end
@@ -78,14 +80,37 @@ local function flatten(nestedTable)
     return flatTable
 end
 
-local gitStore = {
-  git_cache = { unstaged = {}, staged = {}, unmerged = {} }
+--- @class GitStatusStore
+--- @field unstaged table<string, boolean>
+--- @field staged table<string, boolean>
+--- @field unmerged table<string, boolean>
+local prototype = {
+  unstaged = {},
+  staged = {},
+  unmerged = {},
 }
 
-function gitStore:refresh_git_cache()
-  self.git_cache.unstaged = list_to_set(flatten(map(get_all_roots, git_unstaged_changes())))
-  self.git_cache.staged   = list_to_set(flatten(map(get_all_roots, git_staged_changes())))
-  self.git_cache.unmerged = list_to_set(flatten(map(get_all_roots, git_unmerged_changes())))
+--- @param o GitStatusStore|nil
+--- @return GitStatusStore
+function prototype:new(o)
+  o = o or {}
+  setmetatable(o, self)
+  self.__index = self
+  return o
 end
 
-return gitStore
+--- @return GitStatusStore
+function prototype:refreshed()
+  if not is_git_repo() then
+    return prototype:new({ unstaged = {}, staged = {}, unmerged = {} })
+  end
+  return prototype:new({
+    unstaged = list_to_set(flatten(map(get_all_roots, git_unstaged_changes()))),
+    staged   = list_to_set(flatten(map(get_all_roots, git_staged_changes()))),
+    unmerged = list_to_set(flatten(map(get_all_roots, git_unmerged_changes()))),
+  })
+end
+
+M.GitStatusStore = prototype
+
+return M

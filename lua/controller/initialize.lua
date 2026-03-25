@@ -2,6 +2,7 @@ local FileGraph = require("model.filegraph")
 local modelstate = require("model.state")
 local draw_filesystem = require("view.drawfilesystem")
 local diagnostic = require("model.diagnostic")
+local gitstatus = require("model.gitstatus")
 local populatechildren = require("model.populatechildren")
 local path_utils = require("utils.path")
 local fileatposition = require("view.fileatposition")
@@ -106,7 +107,8 @@ function M.new_tbrow_instance(root_filepath, selected_file)
     show_hidden = true,
     diagnostic_store = diagnostic.DiagnosticStore:new({
       max_diag_severity_by_file_lu = {}
-    })
+    }),
+    git_status_store = gitstatus.GitStatusStore:refreshed(),
   }):withDiagnosticsRefreshed()
   if selected_file ~= nil then
     if not path_utils.path_is_directory(selected_file) then

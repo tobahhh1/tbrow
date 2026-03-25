@@ -3,6 +3,7 @@ local state = require("view.state")
 local icons = require("view.icons")
 local path_utils = require("utils.path")
 local diagnostics = require("view.diagnostic")
+local git_status = require("view.gitstatus")
 
 local default_indent_string = "  "
 local function get_indent_string()
@@ -150,11 +151,13 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     )
   end
 
-  return diagnostics.draw_diagnostics(state.ViewState:new({
+  local view_state = diagnostics.draw_diagnostics(state.ViewState:new({
     line_num_to_absolute_filepath = line_num_to_absolute_filepath,
     absolute_filepath_to_first_position = absolute_filepath_to_first_position,
     absolute_filepath_to_last_position = absolute_filepath_to_last_position
   }), model_state, bufnr)
+
+  return git_status.draw_git_status(view_state, model_state, bufnr)
 end
 
 
