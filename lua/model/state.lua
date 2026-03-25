@@ -6,6 +6,7 @@ local M = {}
 --- @class ModelState
 --- @field root FileGraph
 --- @field diagnostic_store DiagnosticStore
+--- @field show_hidden boolean
 local prototype = {}
 
 --- @param o ModelState
@@ -42,9 +43,18 @@ end
 function prototype:withDiagnosticsRefreshed()
   return prototype:new({
     root = self.root,
+    show_hidden = self.show_hidden,
     diagnostic_store = diagnostics.DiagnosticStore:new({
       max_diag_severity_by_file_lu = diagnostics.get_max_diag_severity_by_file_lu()
     })
+  })
+end
+
+function prototype:withHiddenToggled()
+  return prototype:new({
+    root = self.root,
+    show_hidden = not self.show_hidden,
+    diagnostic_store = self.diagnostic_store,
   })
 end
 

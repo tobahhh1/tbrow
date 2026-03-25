@@ -72,6 +72,7 @@ local tbrow_icon_color_ns = vim.api.nvim_create_namespace("tbrow_icon_color_ns")
 --- @return ViewState
 local function draw_filesystem(prev_state, model_state, bufnr)
   local _ = prev_state
+  local show_hidden = model_state.show_hidden ~= false
 
   local lines = {}
   local highlights = {}
@@ -90,6 +91,14 @@ local function draw_filesystem(prev_state, model_state, bufnr)
     local current = stack[#stack]
     table.remove(stack, #stack)
 
+    local current_path = current.node:absoluteFilepath()
+    local filename = get_filename_without_directories(current_path)
+
+    -- Skip hidden files (dotfiles) when show_hidden is false, but never skip root
+    if not show_hidden and current.indent_level > 0 and filename:sub(1, 1) == "." then
+      goto continue
+    end
+
     local line = create_line_to_render(current.indent_level, current.node)
     local indent = repeat_indent(current.indent_level)
     table.insert(lines, line)
@@ -105,7 +114,6 @@ local function draw_filesystem(prev_state, model_state, bufnr)
           hl_group = icons.get_highlight_for_file_node(current.node)
         }
     })
-    local current_path = current.node:absoluteFilepath()
     line_num_to_absolute_filepath[line_num] = current_path
     absolute_filepath_to_first_position[current_path] = {
       row = line_num,
@@ -127,6 +135,8 @@ local function draw_filesystem(prev_state, model_state, bufnr)
         })
       end
     end
+
+    ::continue::
   end
 
   renderer.write_to_buf(lines, bufnr)

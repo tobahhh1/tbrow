@@ -70,4 +70,11 @@ M.open_file = function(wincmd, view_state, tbrow_winnr, row, col)
   vim.cmd("e " .. file)
 end
 
+--- Toggle hidden file visibility. Returns new ModelState with show_hidden inverted.
+--- @param model_state ModelState
+--- @return ModelState
+function M.toggle_hidden(model_state)
+  return model_state:withHiddenToggled()
+end
+
 return M

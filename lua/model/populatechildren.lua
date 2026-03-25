@@ -17,7 +17,7 @@ function M.expand_children(node)
   end
   local ls_output = vim.system(cmd, { text = true}):wait()
   if ls_output.code ~= 0 then
-    error("Cannot expand " .. node.absolute_filepath .. ": ls failed; does the file exist?")
+    return {}
   end
   local children = {}
   for _, child_filename in ipairs(vim.fn.split(ls_output.stdout, "\n")) do

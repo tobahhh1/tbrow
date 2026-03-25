@@ -15,15 +15,23 @@ local function to_absolute_paths(relative_paths)
 end
 
 
+local function is_git_repo()
+  local result = vim.fn.system("git rev-parse --git-dir 2>/dev/null")
+  return vim.v.shell_error == 0 and result ~= ""
+end
+
 local function git_unstaged_changes()
+  if not is_git_repo() then return {} end
   return to_absolute_paths(split(vim.fn.system("git diff --name-only"), "\n"))
 end
 
 local function git_staged_changes()
+  if not is_git_repo() then return {} end
   return to_absolute_paths(split(vim.fn.system("git diff --name-only --staged"), "\n"))
 end
 
 local function git_unmerged_changes()
+  if not is_git_repo() then return {} end
   return to_absolute_paths(split(vim.fn.system("git diff --name-only --diff-filter=U"), "\n"))
 end
 

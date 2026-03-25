@@ -101,9 +101,9 @@ function M.new_tbrow_instance(root_filepath, selected_file)
   local root = FileGraph:new({
       absolute_filepath = root_filepath
     })
-  -- TODO move object creation logic to somewhere that the controller won't own it.
   local model_state = modelstate.ModelState:new({
     root = root,
+    show_hidden = true,
     diagnostic_store = diagnostic.DiagnosticStore:new({
       max_diag_severity_by_file_lu = {}
     })
