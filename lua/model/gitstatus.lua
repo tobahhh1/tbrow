@@ -37,6 +37,11 @@ local function git_unmerged_changes()
   return to_absolute_paths(split(vim.fn.system("git diff --name-only --diff-filter=U"), "\n"))
 end
 
+local function git_untracked_files()
+  if not is_git_repo() then return {} end
+  return to_absolute_paths(split(vim.fn.system("git ls-files --others --exclude-standard"), "\n"))
+end
+
 local function list_to_set(list)
   local set = {}
   for _, val in ipairs(list) do
@@ -84,10 +89,12 @@ end
 --- @field unstaged table<string, boolean>
 --- @field staged table<string, boolean>
 --- @field unmerged table<string, boolean>
+--- @field untracked table<string, boolean>
 local prototype = {
   unstaged = {},
   staged = {},
   unmerged = {},
+  untracked = {},
 }
 
 --- @param o GitStatusStore|nil
@@ -102,12 +109,13 @@ end
 --- @return GitStatusStore
 function prototype:refreshed()
   if not is_git_repo() then
-    return prototype:new({ unstaged = {}, staged = {}, unmerged = {} })
+    return prototype:new({ unstaged = {}, staged = {}, unmerged = {}, untracked = {} })
   end
   return prototype:new({
-    unstaged = list_to_set(flatten(map(get_all_roots, git_unstaged_changes()))),
-    staged   = list_to_set(flatten(map(get_all_roots, git_staged_changes()))),
-    unmerged = list_to_set(flatten(map(get_all_roots, git_unmerged_changes()))),
+    unstaged  = list_to_set(flatten(map(get_all_roots, git_unstaged_changes()))),
+    staged    = list_to_set(flatten(map(get_all_roots, git_staged_changes()))),
+    unmerged  = list_to_set(flatten(map(get_all_roots, git_unmerged_changes()))),
+    untracked = list_to_set(flatten(map(get_all_roots, git_untracked_files()))),
   })
 end
 

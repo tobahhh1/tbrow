@@ -162,6 +162,21 @@ function M:setup(opts)
     vim.g.tbrow_icons = opts.icons
   end
 
+  if opts.git_marks ~= nil then
+    vim.g.tbrow_git_marks = opts.git_marks
+    local group_map = {
+      staged = "TbrowGitStaged",
+      unstaged = "TbrowGitUnstaged",
+      untracked = "TbrowGitUntracked",
+      unmerged = "TbrowGitUnmerged",
+    }
+    for key, config in pairs(opts.git_marks) do
+      if config.hl and group_map[key] then
+        vim.api.nvim_set_hl(0, group_map[key], config.hl)
+      end
+    end
+  end
+
   --- Internal mapping from buffer number to Tbrow instance.
   if TbrowBufnrToInstance == nil then
     TbrowBufnrToInstance = {}
